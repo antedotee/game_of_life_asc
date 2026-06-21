@@ -1,0 +1,6 @@
+docs/
+.DS_Store
+DESIGN.md
+DESIGN.airtable.md
+node_modules/
+dist/

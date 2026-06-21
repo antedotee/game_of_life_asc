@@ -1,0 +1,214 @@
+@import "tailwindcss";
+
+@theme {
+  --font-signifier: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-sohne: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+/* ----- Light theme = Steep. Dark theme = Airtable (surface-dark + signature warmth). ----- */
+:root {
+  --surface: #ffffff;
+  --surface-2: #f7f7f8;
+  --elevated: #ffffff;
+  --text-1: #17191c;
+  --text-2: #4c4c4c;
+  --text-3: #777b86;
+  --hairline: #a3a6af;
+  --accent: #5d2a1a;
+  --btn-bg: #17191c;
+  --btn-fg: #ffffff;
+  --overlay: rgba(23, 25, 28, 0.35);
+  --chip-bg: #f7f7f8;
+  --input-border: #cfd1d6;
+  --card-shadow: rgba(4, 23, 43, 0.05) 0 0 0 1px, rgba(0, 0, 0, 0.1) 0 20px 25px -5px,
+    rgba(0, 0, 0, 0.1) 0 8px 10px -6px;
+
+  /* emil-kow custom easings — the built-in ones are too weak */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --surface: #181d26;
+  --surface-2: #1d1f25;
+  --elevated: #1d1f25;
+  --text-1: #ffffff;
+  --text-2: #c7cbd2;
+  --text-3: #9297a0;
+  --hairline: rgba(255, 255, 255, 0.16);
+  --accent: #fcab79;
+  --btn-bg: #ffffff;
+  --btn-fg: #181d26;
+  --overlay: rgba(0, 0, 0, 0.55);
+  --chip-bg: rgba(255, 255, 255, 0.08);
+  --input-border: rgba(255, 255, 255, 0.18);
+  --card-shadow: rgba(0, 0, 0, 0.5) 0 20px 40px -12px, rgba(0, 0, 0, 0.4) 0 8px 16px -8px,
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-sohne);
+  color: var(--text-1);
+  background: var(--surface);
+  letter-spacing: -0.009em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior: none;
+  overflow: hidden;
+  transition: background 320ms var(--ease-out), color 320ms var(--ease-out);
+}
+
+button {
+  font-family: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+  border: 0;
+  background: none;
+  color: inherit;
+}
+
+/* Pressable feedback — every pressable element confirms the press */
+.pressable {
+  transition: transform 160ms var(--ease-out);
+}
+.pressable:active {
+  transform: scale(0.96);
+}
+
+/* ----- Modals ----- */
+.gol-backdrop {
+  background: var(--overlay);
+  opacity: 1;
+  transition: opacity 220ms var(--ease-out);
+}
+@starting-style {
+  .gol-backdrop {
+    opacity: 0;
+  }
+}
+
+.gol-card {
+  background: var(--elevated);
+  box-shadow: var(--card-shadow);
+  opacity: 1;
+  transform: scale(1);
+  transform-origin: center;
+  transition:
+    opacity 240ms var(--ease-out),
+    transform 240ms var(--ease-out);
+}
+@starting-style {
+  .gol-card {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+/* ----- Library card stagger ----- */
+@keyframes gol-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.gol-stagger {
+  opacity: 0;
+  animation: gol-rise 320ms var(--ease-out) forwards;
+}
+
+/* ----- Toast ----- */
+.gol-toast {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 260ms var(--ease-out),
+    transform 260ms var(--ease-out);
+}
+@starting-style {
+  .gol-toast {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* ----- Squiggle draw-on ----- */
+@keyframes gol-draw {
+  from {
+    stroke-dashoffset: 1000;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.gol-draw {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: gol-draw 900ms var(--ease-out) forwards;
+}
+
+/* ----- Explanation prose ----- */
+.gol-prose h3 {
+  font-family: var(--font-signifier);
+  font-size: 26px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--text-1);
+  margin: 28px 0 10px;
+}
+.gol-prose h3:first-child {
+  margin-top: 0;
+}
+.gol-prose p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-2);
+  margin: 0 0 14px;
+}
+.gol-prose strong {
+  color: var(--text-1);
+  font-weight: 500;
+}
+.gol-prose em {
+  color: var(--accent);
+  font-style: italic;
+}
+
+input[type="text"],
+input:not([type]) {
+  color: var(--text-1);
+}
+input::placeholder {
+  color: var(--text-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  .gol-card,
+  .gol-backdrop,
+  .gol-toast,
+  .gol-stagger {
+    animation-duration: 0.01ms !important;
+    transition-duration: 120ms !important;
+  }
+  .gol-card,
+  .gol-stagger,
+  .gol-toast {
+    transform: none !important;
+  }
+}

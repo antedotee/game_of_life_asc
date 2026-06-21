@@ -1,0 +1,14 @@
+{
+  "targets": {
+    "release": {
+      "outFile": "public/field.wasm",
+      "optimizeLevel": 3,
+      "shrinkLevel": 1,
+      "converge": false,
+      "noAssert": true
+    }
+  },
+  "options": {
+    "bindings": "raw"
+  }
+}
