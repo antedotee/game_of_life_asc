@@ -22,11 +22,11 @@ No winning, no score, nobody to play against. You draw a few cells, press play, 
 <table>
 <tr>
 <td width="50%" align="center">
-<img src="docs/images/board-light.png" alt="A busy board in light mode — stable structures cooled to blue, active cells warm rust" />
+<img src="/public/random_90_light.webp" alt="A busy board in light mode — stable structures cooled to blue, active cells warm rust" />
 <br/><sub><b>Light</b> — the Steep theme</sub>
 </td>
 <td width="50%" align="center">
-<img src="docs/images/board-dark.png" alt="The same board in dark mode — peach active cells, mint stable structures on navy" />
+<img src="/public/random_90_dark.webp" alt="The same board in dark mode — peach active cells, mint stable structures on navy" />
 <br/><sub><b>Dark</b> — the Airtable theme</sub>
 </td>
 </tr>
@@ -78,7 +78,7 @@ The interface is deliberately quiet — almost monochrome, lots of white space, 
 Each cell is coloured by **age**. The moment it's born it's warm — rust in light mode, peach in the dark. The longer it survives, the cooler it gets, drifting toward blue. So a glider gun's exhaust trails off into colour, and a still life that's sat there for a hundred generations glows a calm, settled blue.
 
 <div align="center">
-<img src="docs/images/board-gliders.png" width="60%" alt="A glider gun firing a diagonal stream of gliders; the oldest glider has aged to blue" />
+<img src="/public/glider_gun_random.webp" width="60%" alt="A glider gun firing a diagonal stream of gliders; the oldest glider has aged to blue" />
 <br/><sub>A few gliders mid-flight. The one on the left has been travelling long enough to turn blue.</sub>
 </div>
 
