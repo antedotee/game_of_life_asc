@@ -89,17 +89,18 @@ function RuleCard(props: { rule: Rule; index: number }) {
         />
         <MiniGrid live={props.rule.after} />
       </div>
-      <div class="text-[13px] text-center" style={{ color: "var(--text-2)" }}>
+      <div class="text-[13px] text-center" style={{ color: "var(--text-2)", "text-wrap": "balance" }}>
         {props.rule.caption}
       </div>
     </div>
   );
 }
 
-export default function Info() {
+export default function Info(props: { closing?: boolean }) {
   return (
     <div
       class="gol-backdrop fixed inset-0 z-40 flex items-start justify-center p-4 sm:p-6 overflow-auto"
+      classList={{ closing: props.closing }}
       onClick={() => S.setInfoOpen(false)}
     >
       <div
@@ -115,6 +116,7 @@ export default function Info() {
               "line-height": 1.05,
               "letter-spacing": "-0.02em",
               color: "var(--text-1)",
+              "text-wrap": "balance",
             }}
           >
             The Game of Life

@@ -15,10 +15,12 @@ const cam = S.camera;
 // ponytail: ages/bornAt keyed by "x,y" strings — simplest correct option across the full i32 range.
 let ages = new Map<string, number>();
 let bornAt = new Map<string, number>();
+let dying = new Map<string, { x: number; y: number; age: number; at: number }>();
 let raf = 0;
 let lastStep = 0;
 
 const hover = { x: 0, y: 0, inside: false };
+let lastCursor = "";
 
 // input state
 let spaceDown = false,
@@ -87,14 +89,27 @@ function resize() {
 function afterChange(stepped: boolean) {
   const v = engine.cells();
   const now = performance.now();
+  const animate = S.speed() < 15;
   const next = new Map<string, number>();
   for (let i = 0; i < v.length; i += 2) {
     const k = K(v[i], v[i + 1]);
     const age = stepped ? (ages.has(k) ? ages.get(k)! + 1 : 0) : (ages.get(k) ?? 0);
     next.set(k, age);
-    if (!bornAt.has(k)) bornAt.set(k, now);
+    if (!bornAt.has(k)) {
+      bornAt.set(k, now);
+      if (dying.size) dying.delete(k); // reborn — cancel any pending death fade
+    }
   }
-  for (const k of bornAt.keys()) if (!next.has(k)) bornAt.delete(k);
+  for (const k of bornAt.keys()) {
+    if (!next.has(k)) {
+      // ponytail: cap the exit-animation set so a massive die-off can't stall the frame.
+      if (animate && dying.size < 6000) {
+        const c = k.indexOf(",");
+        dying.set(k, { x: +k.slice(0, c), y: +k.slice(c + 1), age: ages.get(k) ?? 0, at: now });
+      }
+      bornAt.delete(k);
+    }
+  }
   ages = next;
   S.setPopulation(v.length / 2);
 }
@@ -119,14 +134,40 @@ function frame(now: number) {
   raf = requestAnimationFrame(frame);
 }
 
+// emil-kow: strong ease-out + a gentle overshoot, so cells bloom into life rather than blink on.
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+const easeOutBack = (t: number) => {
+  const c1 = 1.3;
+  return 1 + (c1 + 1) * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+};
+const BIRTH_MS = 180;
+const DEATH_MS = 220;
+const BIRTH_SCALE = 0.62; // start visibly smaller (never scale 0) + opacity fade
+const DEATH_SCALE = 0.5;
+
 function paintCell(sx: number, sy: number, sz: number) {
-  if (sz < 4 || !ctx.roundRect) {
+  if (sz < 3 || !ctx.roundRect) {
     ctx.fillRect(sx, sy, sz, sz);
     return;
   }
   ctx.beginPath();
   ctx.roundRect(sx, sy, sz, sz, Math.min(2, sz / 4));
   ctx.fill();
+}
+
+// One cell with opacity + a scale about its centre (used for birth / death transitions).
+function cellAt(cx: number, cy: number, color: string, alpha: number, scale: number) {
+  const sz = cam.scale;
+  const bx = cx * sz + cam.x;
+  const by = cy * sz + cam.y;
+  if (bx > w || by > h || bx + sz < 0 || by + sz < 0) return;
+  const gap = sz > 4 ? 1 : 0;
+  const inner = sz - gap;
+  const drawn = inner * scale;
+  const off = gap * 0.5 + (inner - drawn) / 2;
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  paintCell(bx + off, by + off, drawn);
 }
 
 function draw(now: number) {
@@ -166,40 +207,56 @@ function draw(now: number) {
   }
 
   const v = engine.cells();
-  const sz = cam.scale;
-  const gap = sz > 4 ? 1 : 0;
-  const fade = S.speed() < 15; // birth-fade only when there's time to see it
+  const fade = S.speed() < 15; // birth/death animation only when slow enough to see it
+
+  // exit: cells that just died fade + shrink out, drawn under the live layer
+  if (fade) {
+    for (const [k, d] of dying) {
+      const t = (now - d.at) / DEATH_MS;
+      if (t >= 1) {
+        dying.delete(k);
+        continue;
+      }
+      const e = easeOutCubic(t);
+      cellAt(d.x, d.y, ageColor(theme, d.age), 1 - e, 1 - (1 - DEATH_SCALE) * e);
+    }
+  } else if (dying.size) {
+    dying.clear();
+  }
+
+  // live cells, with a birth pop (scale + opacity) for the freshly born
   for (let i = 0; i < v.length; i += 2) {
     const cx = v[i],
       cy = v[i + 1];
-    const sx = cx * sz + cam.x,
-      sy = cy * sz + cam.y;
-    if (sx > w || sy > h || sx + sz < 0 || sy + sz < 0) continue;
     const k = K(cx, cy);
     let alpha = 1;
+    let scale = 1;
     if (fade) {
       const b = bornAt.get(k);
       if (b !== undefined) {
-        const ft = (now - b) / 150;
-        if (ft < 1) alpha = ft < 0 ? 0 : ft;
+        const t = (now - b) / BIRTH_MS;
+        if (t < 1) {
+          const tc = t < 0 ? 0 : t;
+          alpha = easeOutCubic(tc);
+          scale = BIRTH_SCALE + (1 - BIRTH_SCALE) * easeOutBack(tc);
+        }
       }
     }
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = ageColor(theme, ages.get(k) ?? 0);
-    paintCell(sx + gap * 0.5, sy + gap * 0.5, sz - gap);
+    cellAt(cx, cy, ageColor(theme, ages.get(k) ?? 0), alpha, scale);
   }
   ctx.globalAlpha = 1;
 
   const gh = S.ghost();
   if (gh && hover.inside) {
-    ctx.globalAlpha = 0.4;
-    ctx.fillStyle = ageColor(theme, 0);
-    for (const s of gh) {
-      const sx = (hover.x + s.x) * sz + cam.x,
-        sy = (hover.y + s.y) * sz + cam.y;
-      paintCell(sx + gap * 0.5, sy + gap * 0.5, sz - gap);
-    }
+    for (const s of gh) cellAt(hover.x + s.x, hover.y + s.y, ageColor(theme, 0), 0.4, 1);
     ctx.globalAlpha = 1;
+  }
+
+  // cursor reflects the board's current mode
+  const want = gh ? "copy" : panning ? "grabbing" : spaceDown || S.running() ? "grab" : "crosshair";
+  if (want !== lastCursor) {
+    canvas.style.cursor = want;
+    lastCursor = want;
   }
 }
 
@@ -450,6 +507,7 @@ export function clear() {
   engine.clear();
   ages.clear();
   bornAt.clear();
+  dying.clear();
   S.setRunning(false);
   S.setGeneration(0);
   S.setPopulation(0);

@@ -20,6 +20,7 @@
   --overlay: rgba(23, 25, 28, 0.35);
   --chip-bg: #f7f7f8;
   --input-border: #cfd1d6;
+  --img-outline: rgba(0, 0, 0, 0.1);
   --card-shadow: rgba(4, 23, 43, 0.05) 0 0 0 1px, rgba(0, 0, 0, 0.1) 0 20px 25px -5px,
     rgba(0, 0, 0, 0.1) 0 8px 10px -6px;
 
@@ -45,6 +46,7 @@
   --overlay: rgba(0, 0, 0, 0.55);
   --chip-bg: rgba(255, 255, 255, 0.08);
   --input-border: rgba(255, 255, 255, 0.18);
+  --img-outline: rgba(255, 255, 255, 0.1);
   --card-shadow: rgba(0, 0, 0, 0.5) 0 20px 40px -12px, rgba(0, 0, 0, 0.4) 0 8px 16px -8px,
     inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 
@@ -116,6 +118,33 @@ button {
   }
 }
 
+/* exit — backdrop fades, card scales down (presence keeps it mounted ~240ms) */
+.gol-backdrop.closing {
+  opacity: 0;
+}
+.gol-backdrop.closing .gol-card {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+/* ----- Icon cross-fade (Play/Pause, theme toggle) ----- */
+.gol-iconswap {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: scale(0.25);
+  filter: blur(4px);
+  transition:
+    opacity 160ms cubic-bezier(0.2, 0, 0, 1),
+    transform 160ms cubic-bezier(0.2, 0, 0, 1),
+    filter 160ms cubic-bezier(0.2, 0, 0, 1);
+}
+.gol-iconswap.on {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
+}
+
 /* ----- Library card stagger ----- */
 @keyframes gol-rise {
   from {
@@ -146,6 +175,10 @@ button {
     transform: translateY(8px);
   }
 }
+.gol-toast.closing {
+  opacity: 0;
+  transform: translateY(8px);
+}
 
 /* ----- Squiggle draw-on ----- */
 @keyframes gol-draw {
@@ -170,6 +203,7 @@ button {
   letter-spacing: -0.01em;
   color: var(--text-1);
   margin: 28px 0 10px;
+  text-wrap: balance;
 }
 .gol-prose h3:first-child {
   margin-top: 0;
@@ -179,6 +213,7 @@ button {
   line-height: 1.6;
   color: var(--text-2);
   margin: 0 0 14px;
+  text-wrap: pretty;
 }
 .gol-prose strong {
   color: var(--text-1);

@@ -1,4 +1,4 @@
-import { type Component, For, onCleanup, onMount, Show } from "solid-js";
+import { type Component, For, onCleanup, onMount } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import * as S from "../store";
 import * as sim from "../sim";
@@ -20,16 +20,21 @@ import {
 // macOS-style magnifying dock (Magic UI behavior), ported to Solid. Magnification is a per-frame
 // lerp toward a cursor-distance target — buttery, interruptible, no motion library needed.
 
-const PlayPause = () => (
-  <Show when={S.running()} fallback={<IconPlay />}>
-    <IconPause />
-  </Show>
-);
-const ThemeIcon = () => (
-  <Show when={S.theme() === "light"} fallback={<IconSun />}>
-    <IconMoon />
-  </Show>
-);
+// Two icons stacked, cross-faded (opacity + scale + blur) instead of an instant swap.
+function IconSwap(props: { show: boolean; on: Component; off: Component }) {
+  return (
+    <span style={{ position: "relative", display: "block", width: "22px", height: "22px" }}>
+      <span class="gol-iconswap" classList={{ on: props.show }}>
+        <Dynamic component={props.on} />
+      </span>
+      <span class="gol-iconswap" classList={{ on: !props.show }}>
+        <Dynamic component={props.off} />
+      </span>
+    </span>
+  );
+}
+const PlayPause = () => <IconSwap show={S.running()} on={IconPause} off={IconPlay} />;
+const ThemeIcon = () => <IconSwap show={S.theme() === "dark"} on={IconSun} off={IconMoon} />;
 
 type Item = { icon: Component; label: () => string; onClick: () => void; primary?: boolean };
 

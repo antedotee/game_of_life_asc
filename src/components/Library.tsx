@@ -42,7 +42,12 @@ function Card(props: { p: Pattern; onPick: () => void; index: number }) {
         width="220"
         height="130"
         class="w-full"
-        style={{ "border-radius": "12px", background: "var(--surface)", display: "block" }}
+        style={{
+          "border-radius": "12px",
+          background: "var(--surface)",
+          display: "block",
+          "box-shadow": "0 0 0 1px var(--img-outline)",
+        }}
       />
       <div class="mt-2 text-[15px]" style={{ color: "var(--text-1)", "font-weight": 480 }}>
         {props.p.name}
@@ -54,7 +59,7 @@ function Card(props: { p: Pattern; onPick: () => void; index: number }) {
   );
 }
 
-export default function Library() {
+export default function Library(props: { closing?: boolean }) {
   const [items, setItems] = createSignal<Pattern[]>(cache ?? []);
   const [q, setQ] = createSignal("");
   const [cat, setCat] = createSignal("all");
@@ -90,6 +95,7 @@ export default function Library() {
   return (
     <div
       class="gol-backdrop fixed inset-0 z-40 flex items-start justify-center p-4 sm:p-6"
+      classList={{ closing: props.closing }}
       onClick={() => S.setLibraryOpen(false)}
     >
       <div
@@ -105,6 +111,7 @@ export default function Library() {
               "line-height": 1.1,
               "letter-spacing": "-0.015em",
               color: "var(--text-1)",
+              "text-wrap": "balance",
             }}
           >
             Pattern library

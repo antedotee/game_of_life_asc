@@ -1,9 +1,10 @@
-import { createSignal, onMount, Show } from "solid-js";
+import { createEffect, createSignal, onMount, Show } from "solid-js";
 import Board from "./components/Board";
 import Dock from "./components/Dock";
 import Library from "./components/Library";
 import Info from "./components/Info";
 import * as S from "./store";
+import { createPresence } from "./presence";
 import { initEngine } from "./engine";
 
 function Wordmark() {
@@ -41,13 +42,20 @@ function Counters() {
 }
 
 function Toast() {
+  const p = createPresence(() => S.toast() !== "", 260);
+  const [shown, setShown] = createSignal("");
+  createEffect(() => {
+    const t = S.toast();
+    if (t) setShown(t);
+  });
   return (
-    <Show when={S.toast()}>
+    <Show when={p.present()}>
       <div
         class="gol-toast fixed left-1/2 -translate-x-1/2 bottom-28 z-30 text-[14px] px-4 py-2"
+        classList={{ closing: p.closing() }}
         style={{ background: "var(--text-1)", color: "var(--surface)", "border-radius": "9999px", "font-weight": 450 }}
       >
-        {S.toast()}
+        {shown()}
       </div>
     </Show>
   );
@@ -77,6 +85,8 @@ export default function App() {
     await initEngine();
     setReady(true);
   });
+  const lib = createPresence(S.libraryOpen);
+  const info = createPresence(S.infoOpen);
 
   return (
     <Show when={ready()} fallback={<Splash />}>
@@ -85,11 +95,11 @@ export default function App() {
       <Counters />
       <Dock />
       <Toast />
-      <Show when={S.libraryOpen()}>
-        <Library />
+      <Show when={lib.present()}>
+        <Library closing={lib.closing()} />
       </Show>
-      <Show when={S.infoOpen()}>
-        <Info />
+      <Show when={info.present()}>
+        <Info closing={info.closing()} />
       </Show>
     </Show>
   );

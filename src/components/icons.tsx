@@ -23,7 +23,8 @@ function Svg(props: P & { children: JSX.Element }) {
 
 export const IconPlay = (p: P) => (
   <Svg {...p} fill="currentColor" stroke="none">
-    <path d="M8 5.5v13l11-6.5z" />
+    {/* nudged ~1px right — a centered play triangle reads as left-heavy otherwise */}
+    <path d="M9 5.5v13l11-6.5z" />
   </Svg>
 );
 export const IconPause = (p: P) => (
