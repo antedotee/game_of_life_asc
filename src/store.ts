@@ -14,15 +14,24 @@ export const [toast, setToast] = createSignal("");
 
 // Speed ladder in generations/second. Default ~4/s matches the original playgameoflife.com feel
 // (its midpoint ≈ 293ms/gen). Capped at 30 — past that the cells live <33ms and there's nothing to see.
-export const SPEEDS = [1, 2, 4, 6, 9, 13, 18, 24, 30];
-const [speedIndex, setSpeedIndex] = createSignal(2);
-export { speedIndex };
-export const speed = () => SPEEDS[speedIndex()];
+// Generations per second. Free value (the user can type any number); the −/+ buttons snap through
+// these convenient rungs for quick coarse changes. 60 is the ceiling — that's one step per frame.
+export const SPEEDS = [1, 2, 4, 6, 9, 13, 18, 24, 30, 45, 60, 120, 250, 500, 1000];
+export const MIN_SPEED = 1;
+export const MAX_SPEED = 1000;
+const [speed, setSpeed] = createSignal(4);
+export { speed };
+export function setSpeedClamped(n: number) {
+  if (!Number.isFinite(n)) return;
+  setSpeed(Math.max(MIN_SPEED, Math.min(MAX_SPEED, Math.round(n))));
+}
 export function speedUp() {
-  setSpeedIndex((i) => Math.min(SPEEDS.length - 1, i + 1));
+  const cur = speed();
+  setSpeedClamped(SPEEDS.find((v) => v > cur) ?? MAX_SPEED);
 }
 export function speedDown() {
-  setSpeedIndex((i) => Math.max(0, i - 1));
+  const cur = speed();
+  setSpeedClamped([...SPEEDS].reverse().find((v) => v < cur) ?? MIN_SPEED);
 }
 
 // Camera is plain mutable state — the render loop reads it every frame, so it needs no reactivity.

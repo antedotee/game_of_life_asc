@@ -1,6 +1,7 @@
 // Bloom's imperative core: owns the canvas, render loop, input handling, cell ages, and the actions
 // the chrome calls. Keeps all the non-reactive machinery out of the Solid components.
 
+import { batch } from "solid-js";
 import { engine } from "./engine";
 import { ageColor, boardTokens } from "./render/color";
 import * as S from "./store";
@@ -17,7 +18,8 @@ let ages = new Map<string, number>();
 let bornAt = new Map<string, number>();
 let dying = new Map<string, { x: number; y: number; age: number; at: number }>();
 let raf = 0;
-let lastStep = 0;
+let lastFrame = 0;
+let acc = 0; // accumulated fractional generations to run this frame
 
 const hover = { x: 0, y: 0, inside: false };
 let lastCursor = "";
@@ -123,12 +125,23 @@ function doStep() {
 // --- render loop -------------------------------------------------------------------------------
 
 function frame(now: number) {
+  const dt = lastFrame ? Math.min(0.1, (now - lastFrame) / 1000) : 0; // clamp so a stalled tab can't queue thousands
+  lastFrame = now;
   if (S.running() && !S.ghost()) {
-    const interval = 1000 / S.speed();
-    if (now - lastStep >= interval) {
-      doStep();
-      lastStep = now;
+    acc += dt * S.speed();
+    if (acc >= 1) {
+      let budget = 60; // cap steps per frame so a high speed can't freeze the tab
+      batch(() => {
+        while (acc >= 1 && budget > 0) {
+          doStep();
+          acc -= 1;
+          budget--;
+        }
+      });
+      if (budget === 0) acc = 0; // hit the cap — drop the backlog rather than spiral
     }
+  } else {
+    acc = 0;
   }
   draw(now);
   raf = requestAnimationFrame(frame);

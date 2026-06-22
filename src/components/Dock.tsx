@@ -1,4 +1,4 @@
-import { type Component, For, onCleanup, onMount } from "solid-js";
+import { type Component, createEffect, For, onCleanup, onMount } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import * as S from "../store";
 import * as sim from "../sim";
@@ -8,6 +8,7 @@ import {
   IconMinus,
   IconMoon,
   IconPause,
+  IconPencil,
   IconPlay,
   IconPlus,
   IconRandom,
@@ -51,6 +52,11 @@ const ITEMS: Item[] = [
   { icon: ThemeIcon, label: () => (S.theme() === "light" ? "Dark mode" : "Light mode"), onClick: () => S.toggleTheme() },
 ];
 
+// Grow the gps input to fit however many digits it holds (+2px for the caret).
+function sizeGps(el: HTMLInputElement) {
+  el.style.width = `calc(${Math.max(1, el.value.length)}ch + 2px)`;
+}
+
 export default function Dock() {
   let dockEl!: HTMLDivElement;
   const refs: (HTMLButtonElement | undefined)[] = [];
@@ -93,10 +99,48 @@ export default function Dock() {
     window.removeEventListener("resize", measure);
   });
 
+  // Keep the gps input in sync with the speed signal (e.g. when −/+ change it), but never fight
+  // the user while they're typing into it.
+  let gpsInput: HTMLInputElement | undefined;
+  createEffect(() => {
+    const s = S.speed();
+    if (gpsInput && document.activeElement !== gpsInput) {
+      gpsInput.value = String(s);
+      sizeGps(gpsInput);
+    }
+  });
+
   return (
     <div class="fixed left-1/2 bottom-5 -translate-x-1/2 z-20 flex flex-col items-center gap-2 select-none">
-      <div class="text-[12px] tabular-nums" style={{ color: "var(--text-3)" }}>
-        {S.speed()} generations / sec
+      <div class="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--text-3)" }}>
+        <label class="gol-gps-wrap" title={`Type a speed (${S.MIN_SPEED}–${S.MAX_SPEED})`}>
+          <span class="gol-gps-pencil" aria-hidden="true">
+            <IconPencil />
+          </span>
+          <input
+            ref={gpsInput}
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            aria-label="Generations per second"
+            class="gol-gps"
+            onInput={(e) => {
+              const el = e.currentTarget;
+              el.value = el.value.replace(/[^0-9]/g, ""); // digits only
+              sizeGps(el);
+            }}
+            onChange={(e) => {
+              const el = e.currentTarget;
+              S.setSpeedClamped(parseInt(el.value, 10)); // clamps to 1..MAX, ignores blanks
+              el.value = String(S.speed()); // snap back to the value that took
+              sizeGps(el);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+            }}
+          />
+        </label>
+        <span>generations / sec</span>
       </div>
       <div
         ref={dockEl}

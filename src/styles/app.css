@@ -180,6 +180,53 @@ button {
   transform: translateY(8px);
 }
 
+/* ----- Editable generations/sec field ----- */
+.gol-gps-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border: 1px solid var(--input-border);
+  border-radius: 9999px;
+  background: var(--surface);
+  cursor: text;
+  transition:
+    border-color 150ms var(--ease-out),
+    background 150ms var(--ease-out);
+}
+.gol-gps-wrap:hover {
+  border-color: var(--accent);
+}
+.gol-gps-wrap:focus-within {
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+.gol-gps-pencil {
+  width: 11px;
+  height: 11px;
+  display: block;
+  flex-shrink: 0;
+  color: var(--text-3);
+}
+.gol-gps {
+  width: 1ch; /* JS expands this to fit the number's digits */
+  text-align: center;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  font-weight: 480;
+  color: var(--accent);
+  background: transparent;
+  border: 0;
+  outline: none;
+  padding: 0;
+  -moz-appearance: textfield;
+}
+.gol-gps::-webkit-outer-spin-button,
+.gol-gps::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 /* ----- Squiggle draw-on ----- */
 @keyframes gol-draw {
   from {

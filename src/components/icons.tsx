@@ -102,6 +102,12 @@ export const IconSun = (p: P) => (
     <line x1="6.8" y1="17.2" x2="5.1" y2="18.9" />
   </Svg>
 );
+export const IconPencil = (p: P) => (
+  <Svg {...p}>
+    <path d="M4 20h4L18.5 9.5a2.12 2.12 0 0 0-3-3L5 17z" />
+    <line x1="13.5" y1="6.5" x2="17.5" y2="10.5" />
+  </Svg>
+);
 export const IconMoon = (p: P) => (
   <Svg {...p}>
     <path d="M20 14.5A8 8 0 0 1 9.5 4 7 7 0 1 0 20 14.5z" fill="currentColor" stroke="none" />
