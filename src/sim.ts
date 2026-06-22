@@ -1,7 +1,6 @@
 // Bloom's imperative core: owns the canvas, render loop, input handling, cell ages, and the actions
 // the chrome calls. Keeps all the non-reactive machinery out of the Solid components.
 
-import { batch } from "solid-js";
 import { engine } from "./engine";
 import { ageColor, boardTokens } from "./render/color";
 import * as S from "./store";
@@ -20,6 +19,7 @@ let dying = new Map<string, { x: number; y: number; age: number; at: number }>()
 let raf = 0;
 let lastFrame = 0;
 let acc = 0; // accumulated fractional generations to run this frame
+let generation = 0; // mirrors S.generation(); pushed to the signal once per frame
 
 const hover = { x: 0, y: 0, inside: false };
 let lastCursor = "";
@@ -118,8 +118,14 @@ function afterChange(stepped: boolean) {
 
 function doStep() {
   engine.step();
-  S.setGeneration((g) => g + 1);
+  generation++;
+}
+
+// Age-tracking + the reactive counters only need to run once per rendered frame, not once per
+// generation — the in-between states are never drawn. This is what keeps high gps cheap.
+function commitFrameState() {
   afterChange(true);
+  S.setGeneration(generation);
 }
 
 // --- render loop -------------------------------------------------------------------------------
@@ -131,14 +137,15 @@ function frame(now: number) {
     acc += dt * S.speed();
     if (acc >= 1) {
       let budget = 60; // cap steps per frame so a high speed can't freeze the tab
-      batch(() => {
-        while (acc >= 1 && budget > 0) {
-          doStep();
-          acc -= 1;
-          budget--;
-        }
-      });
+      let stepped = false;
+      while (acc >= 1 && budget > 0) {
+        doStep();
+        acc -= 1;
+        budget--;
+        stepped = true;
+      }
       if (budget === 0) acc = 0; // hit the cap — drop the backlog rather than spiral
+      if (stepped) commitFrameState();
     }
   } else {
     acc = 0;
@@ -514,6 +521,7 @@ export function togglePlay() {
 export function stepOnce() {
   S.setRunning(false);
   doStep();
+  commitFrameState();
 }
 
 export function clear() {
@@ -521,6 +529,7 @@ export function clear() {
   ages.clear();
   bornAt.clear();
   dying.clear();
+  generation = 0;
   S.setRunning(false);
   S.setGeneration(0);
   S.setPopulation(0);
@@ -538,6 +547,7 @@ export function randomizeView() {
   const x1 = Math.ceil((w - cam.x) / cam.scale),
     y1 = Math.ceil((h - cam.y) / cam.scale);
   engine.randomize(x0, y0, x1, y1, 0.32, (Math.random() * 0xffffffff) >>> 0);
+  generation = 0;
   S.setGeneration(0);
   afterChange(false);
 }
